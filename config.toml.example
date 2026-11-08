@@ -12,6 +12,10 @@ bot_mode = "private"  # Bot mode: "private" (chats disabled by default) or "publ
                                    # Set to false to allow bot to respond without @mention in groups
                                    # Note: Each chat can override this via /settings → "群组命令响应"
                                    # When enabled globally, individual chats can still allow responses without @mention
+# delete_source_message = "off"  # 推送成功后删除触发推送的原始链接消息: "off" | "link_only" | "always"
+                                 # link_only: 只删除除 Pixiv 链接外没有其他内容的消息
+                                 # 需要 Bot 是群组管理员且有“删除消息”权限；私聊中不生效
+                                 # 删除失败只记录日志，已发出的图片不受影响
 
 [pixiv]
 refresh_token = "YOUR_PIXIV_REFRESH_TOKEN"

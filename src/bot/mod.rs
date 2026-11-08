@@ -73,6 +73,11 @@ pub async fn run(
         config.require_mention_in_group
     );
 
+    info!(
+        "Delete source link message: {:?}",
+        config.delete_source_message
+    );
+
     let handler = BotHandler::new(
         repo.clone(),
         pixiv_client.clone(),
@@ -83,6 +88,7 @@ pub async fn run(
         image_size,
         download_original_threshold,
         config.require_mention_in_group,
+        config.delete_source_message,
         cache_dir,
         log_dir,
         booru_registry,

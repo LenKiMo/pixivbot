@@ -19,7 +19,7 @@ mod tests {
     use crate::bot::notifier::Notifier;
     use crate::bot::BotHandler;
     use crate::cache::FileCacheManager;
-    use crate::config::{EhentaiConfig, PixivConfig};
+    use crate::config::{DeleteSourceMode, EhentaiConfig, PixivConfig};
     use crate::db::repo::tests_helpers;
     use crate::db::types::{TagFilter, TaskType};
     use crate::pixiv::client::PixivClient;
@@ -175,6 +175,7 @@ mod tests {
             pixiv_client::ImageSize::Large,
             3,
             true,
+            DeleteSourceMode::Off,
             "data/test_cache".to_string(),
             "data/test_logs".to_string(),
             Arc::new(BooruSiteRegistry::default()),

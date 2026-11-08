@@ -1,8 +1,8 @@
 use crate::booru::BooruSiteRegistry;
-use crate::bot::link_handler::{parse_pixiv_links, PixivLink};
+use crate::bot::link_handler::{parse_pixiv_links, strip_pixiv_links, PixivLink};
 use crate::bot::notifier::{DownloadButtonConfig, Notifier, ThrottledBot};
 use crate::bot::Command;
-use crate::config::EhentaiConfig;
+use crate::config::{DeleteSourceMode, EhentaiConfig};
 use crate::db::repo::Repo;
 use crate::db::types::{TagFilter, TaskType, UserRole};
 use crate::pixiv::client::PixivClient;
@@ -27,6 +27,8 @@ pub struct BotHandler {
     pub(crate) download_original_threshold: u8,
     /// 群组中是否需要 @bot 才响应 (默认: true)
     pub(crate) require_mention_in_group: bool,
+    /// 推送成功后是否删除触发推送的原始链接消息
+    pub(crate) delete_source_message: DeleteSourceMode,
     /// 缓存目录路径 (用于查看磁盘占用)
     pub(crate) cache_dir: String,
     /// 日志目录路径 (用于查看磁盘占用)
@@ -49,6 +51,7 @@ impl BotHandler {
         image_size: pixiv_client::ImageSize,
         download_original_threshold: u8,
         require_mention_in_group: bool,
+        delete_source_message: DeleteSourceMode,
         cache_dir: String,
         log_dir: String,
         booru_registry: Arc<BooruSiteRegistry>,
@@ -66,6 +69,7 @@ impl BotHandler {
             image_size,
             download_original_threshold,
             require_mention_in_group,
+            delete_source_message,
             cache_dir,
             log_dir,
             booru_registry,
@@ -197,12 +201,14 @@ impl BotHandler {
         );
 
         let chat_settings = &ctx.chat;
+        let mut sent_illusts = 0usize;
 
         for link in links {
             match link {
                 PixivLink::Illust(illust_id) => {
                     self.handle_illust_link(bot.clone(), chat_id, illust_id, chat_settings)
                         .await?;
+                    sent_illusts += 1;
                 }
                 PixivLink::User(user_id) => {
                     self.handle_user_link(bot.clone(), chat_id, user_id).await?;
@@ -210,7 +216,46 @@ impl BotHandler {
             }
         }
 
+        self.cleanup_source_message(bot, &msg, text, sent_illusts)
+            .await;
+
         Ok(())
+    }
+
+    /// 按 `telegram.delete_source_message` 配置删除触发推送的原始消息
+    ///
+    /// 只在成功推送过作品、且处于群组/频道时执行：私聊中 Bot 无权删除用户消息。
+    /// 删除需要 Bot 是群管理员且有删除消息权限；失败只记日志，不影响已经发出的图片。
+    async fn cleanup_source_message(
+        &self,
+        bot: ThrottledBot,
+        msg: &Message,
+        text: &str,
+        sent_illusts: usize,
+    ) {
+        if sent_illusts == 0 || msg.chat.is_private() {
+            return;
+        }
+
+        let should_delete = match self.delete_source_message {
+            DeleteSourceMode::Off => false,
+            DeleteSourceMode::Always => true,
+            DeleteSourceMode::LinkOnly => strip_pixiv_links(text).trim().is_empty(),
+        };
+        if !should_delete {
+            return;
+        }
+
+        match bot.delete_message(msg.chat.id, msg.id).await {
+            Ok(()) => info!(
+                "Deleted source message {} in chat {}",
+                msg.id.0, msg.chat.id
+            ),
+            Err(err) => error!(
+                "Failed to delete source message {} in chat {}: {:#}",
+                msg.id.0, msg.chat.id, err
+            ),
+        }
     }
 
     /// 处理作品链接 - 推送作品图片

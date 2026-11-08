@@ -18,6 +18,19 @@ impl BotMode {
     }
 }
 
+/// 推送成功后是否删除触发推送的原始链接消息
+#[derive(Debug, Deserialize, Clone, Copy, PartialEq, Eq, Default)]
+#[serde(rename_all = "snake_case")]
+pub enum DeleteSourceMode {
+    /// 不删除
+    #[default]
+    Off,
+    /// 仅当消息除 Pixiv 链接外没有其他内容时删除
+    LinkOnly,
+    /// 只要成功推送了作品就删除
+    Always,
+}
+
 #[derive(Debug, Deserialize, Clone)]
 pub struct Config {
     pub telegram: TelegramConfig,

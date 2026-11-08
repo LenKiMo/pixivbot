@@ -55,6 +55,12 @@ pub fn parse_pixiv_links(text: &str) -> Vec<PixivLink> {
     links.into_iter().map(|(_, link)| link).collect()
 }
 
+/// 移除文本中的 Pixiv 作品/作者链接，用于判断消息是否只由链接构成
+pub fn strip_pixiv_links(text: &str) -> String {
+    let stripped = ILLUST_REGEX.replace_all(text, " ");
+    USER_REGEX.replace_all(&stripped, " ").to_string()
+}
+
 /// 一条 Booru 站点帖子引用，用于跨模块传递解析结果
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct BooruPostRef {

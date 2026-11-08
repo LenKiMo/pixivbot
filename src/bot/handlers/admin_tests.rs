@@ -19,7 +19,7 @@ fn message(chat: i64, actor: u64) -> Message {
 async fn fixture() -> (MockServer, ThrottledBot, BotHandler) {
     use crate::bot::notifier::Notifier;
     use crate::cache::FileCacheManager;
-    use crate::config::PixivConfig;
+    use crate::config::{DeleteSourceMode, PixivConfig};
     use crate::pixiv::{client::PixivClient, downloader::Downloader};
     let server = MockServer::start().await;
     let sequence = Arc::new(std::sync::atomic::AtomicI32::new(100));
@@ -93,6 +93,7 @@ async fn fixture() -> (MockServer, ThrottledBot, BotHandler) {
         pixiv_client::ImageSize::Large,
         3,
         true,
+        DeleteSourceMode::Off,
         String::new(),
         String::new(),
         Arc::new(Default::default()),
