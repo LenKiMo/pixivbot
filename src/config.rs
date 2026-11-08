@@ -60,6 +60,9 @@ pub struct TelegramConfig {
     /// When false, the bot responds to all messages in groups without requiring @mention
     #[serde(default = "default_require_mention_in_group")]
     pub require_mention_in_group: bool,
+    /// 推送成功后是否删除触发推送的原始链接消息（默认 off）
+    #[serde(default)]
+    pub delete_source_message: DeleteSourceMode,
 }
 
 fn default_require_mention_in_group() -> bool {

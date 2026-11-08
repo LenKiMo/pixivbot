@@ -247,7 +247,7 @@ impl BotHandler {
         }
 
         match bot.delete_message(msg.chat.id, msg.id).await {
-            Ok(()) => info!(
+            Ok(_) => info!(
                 "Deleted source message {} in chat {}",
                 msg.id.0, msg.chat.id
             ),
