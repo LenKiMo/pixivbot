@@ -55,10 +55,13 @@ pub fn parse_pixiv_links(text: &str) -> Vec<PixivLink> {
     links.into_iter().map(|(_, link)| link).collect()
 }
 
-/// 移除文本中的 Pixiv 作品/作者链接，用于判断消息是否只由链接构成
+/// 匹配完整的 Pixiv URL（含查询串），用于判断消息是否只由链接构成
+static PIXIV_URL_TOKEN_REGEX: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"https?://(?:www\.)?pixiv\.net/\S+").unwrap());
+
+/// 移除文本中的 Pixiv 链接（整段 URL，含 `?from=...` 之类的查询串）
 pub fn strip_pixiv_links(text: &str) -> String {
-    let stripped = ILLUST_REGEX.replace_all(text, " ");
-    USER_REGEX.replace_all(&stripped, " ").to_string()
+    PIXIV_URL_TOKEN_REGEX.replace_all(text, " ").to_string()
 }
 
 /// 一条 Booru 站点帖子引用，用于跨模块传递解析结果

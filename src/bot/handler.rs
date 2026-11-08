@@ -240,7 +240,7 @@ impl BotHandler {
         let should_delete = match self.delete_source_message {
             DeleteSourceMode::Off => false,
             DeleteSourceMode::Always => true,
-            DeleteSourceMode::LinkOnly => strip_pixiv_links(text).trim().is_empty(),
+            DeleteSourceMode::LinkOnly => is_blank_after_strip(strip_pixiv_links(text).as_str()),
         };
         if !should_delete {
             return;
@@ -398,4 +398,19 @@ impl BotHandler {
 
         Ok(())
     }
+}
+
+/// 去掉 Pixiv 链接后，剩余内容是否只是空白或标点
+///
+/// `link_only` 模式下用它判断"这条消息只是在发链接"，
+/// 允许 `https://www.pixiv.net/artworks/1。` 这类带标点的写法。
+fn is_blank_after_strip(residual: &str) -> bool {
+    residual.chars().all(|c| {
+        c.is_whitespace()
+            || matches!(
+                c,
+                '.' | ',' | '!' | '?' | ';' | ':' | '-' | '_' | '~' | '/' | '、' | '。' | '，'
+                    | '！' | '？' | '；' | '：' | '…' | '—' | '·' | '|'
+            )
+    })
 }
